@@ -1,0 +1,32 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: config-server
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/orosales/microservices-driver-licence.git
+          defaultLabel: main
+          refreshRate: 30
+          cloneOnStart: true
+          forcePull: true
+          username: '{cipher}ecc3742deda47d0218eb3879df17b4b3f3ca32881e7d3a2a32894a39e3bf685f'
+          password: '{cipher}0fa670f67f0e2a5886e6c03cc572c05e31dc3eb3e6bfea24094b04470d19bc59a58ce177ef085b3fc0591840941d133a64e50741aa4a64df6f08dbcf0aac8c99'
+        encrypt:
+          enabled: false
+
+
+eureka:
+  client:
+    fetchRegistry: true
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+
+encrypt:
+  key: mitocode-secret
+
