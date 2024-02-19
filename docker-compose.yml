@@ -1,0 +1,171 @@
+version: "3.9"
+
+services:
+
+  #mongo-service:
+  #  image: mongo
+  #  container_name: mitocode-mongo-service
+  #  ports:
+  #    - 27017:27017
+  #  environment:
+  #    MONGO_INITDB_ROOT_USERNAME: mitocode
+  #    MONGO_INITDB_ROOT_PASSWORD: mitocode
+  #  networks:
+  #    - mitocode
+  #  volumes:
+  #    - ./data/:/data/db
+
+  #mongo-express:
+  #  image: mongo-express
+  #  container_name: mitocode-mongo-express
+  #  ports: 
+  #    - 8081:8081
+  #  environment:
+  #    ME_CONFIG_MONGODB_ADMINUSERNAME: mitocode
+  #    ME_CONFIG_MONGODB_ADMINPASSWORD: mitocode
+  #    ME_CONFIG_MONGODB_URL: mongodb://mitocode:mitocode@mongo-service:27017
+  #  networks:
+  #    - mitocode
+
+
+  postgres-mitocode:
+    image: postgres:13.1-alpine
+    container_name: mitocode-postgresql
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: mitocode
+      POSTGRES_PASSWORD: mitocode
+      POSTGRES_DB: mitocodedb
+    networks:
+      - mitocode
+
+  pgadmin-mitocode:
+    container_name: mitocode-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5052:80"
+    networks:
+      - mitocode
+    restart: unless-stopped    
+
+  #mysql:
+  #    image: mysql:latest
+  #    container_name: mitocode-mysql
+      # volumes:
+      #   - ./mysql/:/var/lib/mysql
+  #    environment:
+  #      MYSQL_ROOT_PASSWORD: root_pwd
+  #      MYSQL_DATABASE: keycloak
+  #      MYSQL_USER: admin
+  #      MYSQL_PASSWORD: pa55word
+  #    ports:
+  #      - 3306:3306
+  #    networks:
+  #      - mitocode
+
+  #keycloak:
+  #    image: quay.io/keycloak/keycloak:19.0.1
+  #    container_name: mitocode-keycloack
+  #    environment:
+  #      KEYCLOAK_ADMIN: admin
+  #      KEYCLOAK_ADMIN_PASSWORD: admin
+  #      KC_DB: mysql
+  #      KC_DB_USERNAME: admin
+  #      KC_DB_PASSWORD: pa55word
+  #      KC_DB_URL_HOST: mysql
+  #      KC_DB_URL_PORT: 3306
+  #      KC_DB_SCHEMA: keycloak
+        # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the MySQL JDBC driver documentation in order to use it.
+        #JDBC_PARAMS: "connectTimeout=30000"
+  #    ports:
+  #      - 8080:8080
+  #    depends_on:
+  #      - mysql
+  #    command: start-dev
+  #    networks:
+  #      - mitocode    
+
+  #prometheus:
+  #    image: prom/prometheus
+  #    container_name: mitocode-prometheus
+  #    ports:
+  #      - 9090:9090
+  #    volumes:
+  #      - ./prometheus/config/:/etc/prometheus/
+  #    command:
+  #      - '--config.file=/etc/prometheus/prometheus.yml'
+  #    networks:
+  #      - mitocode
+
+  #grafana:
+  #  image: grafana/grafana-oss
+  #  container_name: mitocode-grafana
+  #  ports: 
+  #    - 3000:3000
+  #  volumes:
+  #    - ./grafana/:/var/lib/grafana
+  #  environment:
+  #    - GF_SECURITY_ADMIN_PASSWORD=admin
+  #    - GF_SERVER_DOMAIN=localhost
+  #  networks:
+  #    - mitocode
+
+  #zipkin:
+  #  image: openzipkin/zipkin
+  #  container_name: mitocode-zipkin
+  #  environment:
+  #    - STORAGE_TYPE=mem
+  #  ports:
+  #    - 9411:9411
+  #  networks:
+  #    - mitocode
+
+  #loki:
+  #  image: grafana/loki
+  #  container_name: mitocode-loki
+  #  ports:
+  #    - 3100:3100
+  #  networks:
+  #    - mitocode
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    container_name: mitocode-kafka-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - mitocode
+
+  broker:
+    image: confluentinc/cp-kafka
+    container_name: mitocode-kafka-broker
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_REPLICATION_FACTOR: 1
+    networks:
+      - mitocode      
+
+      # Commands:
+      # docker exec mitocode-kafka-broker kafka-topics --bootstrap-server broker:9092 --create --topic mitocode
+      # docker exec --interactive --tty mitocode-kafka-broker kafka-console-producer --bootstrap-server broker:9092 --topic mitocode
+      # docker exec --interactive --tty mitocode-kafka-broker kafka-console-consumer --bootstrap-server broker:9092 --topic mitocode
+  
+
+networks:
+  mitocode:
+    name: mitocode-network
