@@ -1,15 +1,14 @@
 package com.orosales.microservices.driverlicenceservice.service.impl;
 
+import com.orosales.microservices.commonmodels.model.entity.AuditInfo;
 import com.orosales.microservices.driverlicenceservice.dto.FilterLicenceDTO;
 import com.orosales.microservices.driverlicenceservice.dto.ValidityDTO;
-import com.orosales.microservices.driverlicenceservice.model.Licence;
+import com.orosales.microservices.commonmodels.model.entity.Licence;
+
 import com.orosales.microservices.driverlicenceservice.repository.ILicenceRepo;
 import com.orosales.microservices.driverlicenceservice.service.ILicenceService;
 import com.orosales.microservices.driverlicenceservice.util.Constants;
 import com.orosales.microservices.driverlicenceservice.util.KafkaUtil;
-import jakarta.inject.Inject;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 
@@ -36,8 +35,16 @@ public class LicenceService implements ILicenceService {
 
     @Override
     public Licence register(Licence licence) throws Exception {
+        licence = repo.save(licence);
         kafkaUtil.sendMessage(licence);
-        return repo.save(licence);
+        kafkaUtil.sendMessage(AuditInfo.builder()
+                .appCallerName("Licence Service")
+                .currentTimestampAction(System.currentTimeMillis())
+                .message("Testing Kafka from Licence Service")
+                .opnNumber(licence.getIdLicence().toString() )
+                .statusCode("200")
+                .build() );
+        return licence;
     }
 
     @Override

@@ -2,7 +2,8 @@ package com.orosales.microservices.driverlicenceservice.service;
 
 import com.orosales.microservices.driverlicenceservice.dto.FilterLicenceDTO;
 import com.orosales.microservices.driverlicenceservice.dto.ValidityDTO;
-import com.orosales.microservices.driverlicenceservice.model.Licence;
+import com.orosales.microservices.commonmodels.model.entity.Licence;
+
 
 import java.util.List;
 import java.util.Map;

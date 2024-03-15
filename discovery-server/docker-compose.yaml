@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+
+  docker-postgres-mitocode:
+    image: postgres:13.1-alpine
+    container_name: orosales-postgresql
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: mitocode
+      POSTGRES_PASSWORD: mitocode
+      POSTGRES_DB: mitocodedb
+    networks:
+      - mitocode
+
+  docker-pgadmin-mitocode:
+    container_name: orosales-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5052:80"
+    networks:
+      - mitocode
+    restart: unless-stopped
+
+
+  discovery-server:
+    build: .
+    container_name: orosales-discovery-server
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:8761"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    ports:
+      - 8761:8761
+    networks:
+      - mitocode
+
+
+  config-server:
+    build: ../config-server/
+    container_name: orosales-config-server
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:9000/product-service/dev"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    environment:
+      CUSTOM.SERVER.PORT: 9000
+      EUREKA.SERVER.HOSTNAME: http://discovery-server:8761/eureka
+    networks:
+      - mitocode
+
+volumes:
+  docker-mitocode-mongodb-query-storage:
+
+networks:
+  mitocode:
+    name: mitocode-network

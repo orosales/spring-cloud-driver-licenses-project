@@ -3,7 +3,7 @@ package com.orosales.microservices.driverlicenceservice.web;
 
 import com.orosales.microservices.driverlicenceservice.dto.FilterLicenceDTO;
 import com.orosales.microservices.driverlicenceservice.dto.ValidityDTO;
-import com.orosales.microservices.driverlicenceservice.model.Licence;
+import com.orosales.microservices.commonmodels.model.entity.Licence;
 import com.orosales.microservices.driverlicenceservice.service.ILicenceService;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;

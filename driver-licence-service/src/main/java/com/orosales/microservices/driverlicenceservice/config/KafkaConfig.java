@@ -1,6 +1,6 @@
 package com.orosales.microservices.driverlicenceservice.config;
 
-import com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
+import com.orosales.microservices.commonmodels.model.entity.GenericEntity;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +21,7 @@ public class KafkaConfig {
     @Value("${kafka.orosales.port:9092}")
     private String kafkaPort;
 
-    public ProducerFactory<String, Object> producerFactory() {
+    public ProducerFactory<String, GenericEntity> producerFactory() {
         Map<String, Object> kafkaProperties = new HashMap<>();
         kafkaProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer+":"+kafkaPort);
         kafkaProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
@@ -30,7 +30,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate() {
+    public KafkaTemplate<String, GenericEntity> kafkaTemplate() {
         return new KafkaTemplate<>( producerFactory() );
     }
 }
