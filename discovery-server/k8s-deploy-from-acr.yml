@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: discovery-server
+  template:
+    metadata:
+      labels:
+        app: discovery-server
+    spec:
+      containers:
+        - name: discovery-server
+          image: testpprsregistry.azurecr.io/discovery-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8761
+# service type loadbalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: discovery-server
+    k8s-app: discovery-server
+  name: discovery-server
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8761
+  type: LoadBalancer
+  selector:
+    app: discovery-server

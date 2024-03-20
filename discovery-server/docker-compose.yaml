@@ -28,6 +28,34 @@ services:
     restart: unless-stopped
 
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    container_name: orosales-kafka-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - mitocode
+
+  kafka-broker:
+    image: confluentinc/cp-kafka
+    container_name: orosales-kafka-broker
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_REPLICATION_FACTOR: 1
+    networks:
+      - mitocode
+
+
   discovery-server:
     build: .
     container_name: orosales-discovery-server
@@ -46,7 +74,7 @@ services:
     build: ../config-server/
     container_name: orosales-config-server
     healthcheck:
-      test: ["CMD", "curl", "http://localhost:9000/product-service/dev"]
+      test: ["CMD", "curl", "http://localhost:9000/driver-licence-service/dev"]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -58,6 +86,55 @@ services:
       EUREKA.SERVER.HOSTNAME: http://discovery-server:8761/eureka
     networks:
       - mitocode
+
+  cloud-gateway:
+    build: ../cloud-gateway/
+    container_name: orosales-cloud-gateway
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - 9080:9080
+    environment:
+      EUREKA.SERVER.HOSTNAME: http://discovery-server:8761/eureka
+      CONFIG.SERVER.HOSTNAME: http://config-server:9000
+    networks:
+      - mitocode
+
+  my-new-first-driver-licence-service:
+    build: ../driver-licence-service/
+    container_name: my-new-driver-licence-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    environment:
+      EUREKA.SERVER.HOSTNAME: http://discovery-server:8761/eureka
+      CONFIG.SERVER.HOSTNAME: http://config-server:9000
+      POSTGRESQL.URL.CONNECTION: jdbc:postgresql://docker-postgres-mitocode:5432/mitocodedb
+      KAFKA.SERVER.HOSTNAME: kafka-broker
+    networks:
+      - mitocode
+
+  audit-service:
+    build: ../audit-service/
+    container_name: orosales-audit-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    environment:
+      EUREKA.SERVER.HOSTNAME: http://discovery-server:8761/eureka
+      CONFIG.SERVER.HOSTNAME: http://config-server:9000
+      POSTGRESQL.URL.CONNECTION: jdbc:postgresql://docker-postgres-mitocode:5432/mitocodedb
+      KAFKA.SERVER.HOSTNAME: kafka-broker
+    networks:
+      - mitocode
+
 
 volumes:
   docker-mitocode-mongodb-query-storage:
